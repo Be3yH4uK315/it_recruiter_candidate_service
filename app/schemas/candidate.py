@@ -10,8 +10,10 @@ class CandidateSkillBase(BaseModel):
     kind: SkillKind
     level: Optional[int] = Field(None, ge=1, le=5)
 
+
 class CandidateSkillCreate(CandidateSkillBase):
     pass
+
 
 class CandidateSkill(CandidateSkillBase):
     id: UUID
@@ -19,6 +21,7 @@ class CandidateSkill(CandidateSkillBase):
 
     class Config:
         from_attributes = True
+
 
 class CandidateBase(BaseModel):
     display_name: str
