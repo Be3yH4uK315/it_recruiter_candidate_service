@@ -46,3 +46,23 @@ def update_candidate(
         db=db, db_candidate=db_candidate, candidate_in=candidate_in
     )
     return updated_candidate
+
+
+@router.patch("/by-telegram/{telegram_id}", response_model=schemas.Candidate)
+def update_candidate_by_telegram_id(
+    telegram_id: int,
+    candidate_in: schemas.CandidateUpdate,
+    db: Session = Depends(get_db),
+):
+    db_candidate = crud.candidate.get_candidate_by_telegram_id(
+        db, telegram_id=telegram_id
+    )
+    if db_candidate is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found"
+        )
+
+    updated_candidate = crud.candidate.update_candidate(
+        db=db, db_candidate=db_candidate, candidate_in=candidate_in
+    )
+    return updated_candidate

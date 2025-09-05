@@ -53,6 +53,7 @@ class CandidateUpdate(BaseModel):
     location: Optional[str] = None
     work_modes: Optional[str] = None
     contacts: Optional[dict] = None
+    skills: Optional[List[CandidateSkillCreate]] = None
 
     class Config:
         from_attributes = True

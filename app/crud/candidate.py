@@ -43,6 +43,17 @@ def update_candidate(
     for field, value in update_data.items():
         setattr(db_candidate, field, value)
 
+    if "skills" in update_data and update_data["skills"] is not None:
+        db.query(models.CandidateSkill).filter(
+            models.CandidateSkill.candidate_id == db_candidate.id
+        ).delete()
+
+        for skill_in in candidate_in.skills:
+            db_skill = models.CandidateSkill(
+                **skill_in.model_dump(), candidate_id=db_candidate.id
+            )
+            db.add(db_skill)
+
     db.add(db_candidate)
     db.commit()
     db.refresh(db_candidate)
