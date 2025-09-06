@@ -35,6 +35,10 @@ def get_candidate(db: Session, candidate_id: UUID):
     )
 
 
+def get_all_candidates(db: Session):
+    return db.query(models.Candidate).all()
+
+
 def update_candidate(
     db: Session, db_candidate: models.Candidate, candidate_in: schemas.CandidateUpdate
 ):

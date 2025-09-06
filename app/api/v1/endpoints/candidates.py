@@ -20,6 +20,11 @@ def create_candidate(candidate: schemas.CandidateCreate, db: Session = Depends(g
     return crud.candidate.create_candidate(db=db, candidate=candidate)
 
 
+@router.get("/all", response_model=list[schemas.Candidate])
+def get_all_candidates(db: Session = Depends(get_db)):
+    return crud.candidate.get_all_candidates(db)
+
+
 @router.get("/{candidate_id}", response_model=schemas.Candidate)
 def read_candidate(candidate_id: UUID, db: Session = Depends(get_db)):
     db_candidate = crud.candidate.get_candidate(db, candidate_id=candidate_id)
