@@ -41,7 +41,8 @@ def update_candidate(
     update_data = candidate_in.model_dump(exclude_unset=True)
 
     for field, value in update_data.items():
-        setattr(db_candidate, field, value)
+        if field != "skills":
+            setattr(db_candidate, field, value)
 
     if "skills" in update_data and update_data["skills"] is not None:
         db.query(models.CandidateSkill).filter(
