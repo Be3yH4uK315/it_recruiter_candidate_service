@@ -71,3 +71,40 @@ def update_candidate_by_telegram_id(
         db=db, db_candidate=db_candidate, candidate_in=candidate_in
     )
     return updated_candidate
+
+
+@router.post("/by-telegram/{telegram_id}/resume", response_model=schemas.Resume, status_code=status.HTTP_201_CREATED)
+def add_resume_for_candidate(telegram_id: int, resume_in: schemas.Resume, db: Session = Depends(get_db)):
+    db_candidate = crud.get_candidate_by_telegram_id(db, telegram_id=telegram_id)
+    if not db_candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    # Здесь будет вызов File Storage Service для валидации object_key
+    # Пока просто сохраняем метаданные
+    return crud.add_resume(db=db, candidate=db_candidate, resume_in=resume_in)
+
+
+@router.get("/by-telegram/{telegram_id}", response_model=schemas.Candidate)
+def read_candidate_by_telegram_id(
+    telegram_id: int,
+    db: Session = Depends(get_db),
+):
+    db_candidate = crud.candidate.get_candidate_by_telegram_id(db, telegram_id=telegram_id)
+    if db_candidate is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found"
+        )
+    return db_candidate
+
+
+@router.delete("/{candidate_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_candidate(
+    candidate_id: UUID,
+    db: Session = Depends(get_db)
+):
+    deleted_candidate = crud.delete_candidate(db, candidate_id=candidate_id)
+    if not deleted_candidate:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found"
+        )
+    return None

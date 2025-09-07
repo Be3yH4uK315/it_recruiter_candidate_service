@@ -51,7 +51,7 @@ def update_candidate(
     if "skills" in update_data and update_data["skills"] is not None:
         db.query(models.CandidateSkill).filter(
             models.CandidateSkill.candidate_id == db_candidate.id
-        ).delete()
+        ).delete(synchronize_session=False)
 
         for skill_in in candidate_in.skills:
             db_skill = models.CandidateSkill(
@@ -62,4 +62,20 @@ def update_candidate(
     db.add(db_candidate)
     db.commit()
     db.refresh(db_candidate)
+    return db_candidate
+
+
+def add_resume(db: Session, candidate: models.Candidate, resume_in: schemas.ResumeCreate) -> models.Resume:
+    db_resume = models.Resume(**resume_in.model_dump(), candidate_id=candidate.id)
+    db.add(db_resume)
+    db.commit()
+    db.refresh(db_resume)
+    return db_resume
+
+
+def delete_candidate(db: Session, candidate_id: UUID) -> models.Candidate | None:
+    db_candidate = db.query(models.Candidate).filter(models.Candidate.id == candidate_id).first()
+    if db_candidate:
+        db.delete(db_candidate)
+        db.commit()
     return db_candidate

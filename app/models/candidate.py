@@ -8,6 +8,9 @@ from sqlalchemy import (
     func,
     ForeignKey,
     SmallInteger,
+    Integer,
+    Text,
+    Date
 )
 from sqlalchemy.dialects.postgresql import UUID, BIGINT, JSONB, NUMERIC
 from app.core.db import Base
@@ -36,14 +39,52 @@ class CandidateSkill(Base):
     __tablename__ = "candidate_skills"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    candidate_id = Column(
-        UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False
-    )
+    candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
     skill = Column(String(100), nullable=False)
     kind = Column(SQLAlchemyEnum(SkillKind), nullable=False)
     level = Column(SmallInteger, nullable=True)
-
+    
     candidate = relationship("Candidate", back_populates="skills")
+
+
+class Resume(Base):
+    __tablename__ = "resumes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
+    object_key = Column(String(512), nullable=False, unique=True)
+    filename = Column(String(255), nullable=False)
+    mime_type = Column(String(100), nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    candidate = relationship("Candidate", back_populates="resumes")
+
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    links = Column(JSONB)
+
+    candidate = relationship("Candidate", back_populates="projects")
+
+
+class Experience(Base):
+    __tablename__ = "experiences"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
+    company = Column(String(255), nullable=False)
+    position = Column(String(255), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)
+    responsibilities = Column(Text, nullable=True)
+
+    candidate = relationship("Candidate", back_populates="experiences")
 
 
 class Candidate(Base):
@@ -54,22 +95,15 @@ class Candidate(Base):
     display_name = Column(String(255))
     headline_role = Column(String(255))
     experience_years = Column(NUMERIC(3, 1))
-
     location = Column(String(255), nullable=True)
-    work_modes = Column(String, default="remote")
-
-    contacts_visibility = Column(
-        SQLAlchemyEnum(ContactsVisibility),
-        default=ContactsVisibility.ON_REQUEST,
-        nullable=False,
-    )
+    work_modes = Column(JSONB)
+    contacts_visibility = Column(SQLAlchemyEnum(ContactsVisibility), default=ContactsVisibility.ON_REQUEST, nullable=False)
     contacts = Column(JSONB)
-
     status = Column(SQLAlchemyEnum(Status), default=Status.ACTIVE, nullable=False)
-
-    skills = relationship(
-        "CandidateSkill", back_populates="candidate", cascade="all, delete-orphan"
-    )
-
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, onupdate=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    skills = relationship("CandidateSkill", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
+    resumes = relationship("Resume", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
+    projects = relationship("Project", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
+    experiences = relationship("Experience", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")

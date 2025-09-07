@@ -1,8 +1,29 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional, List
 from uuid import UUID
 from decimal import Decimal
+from datetime import datetime
 from app.models.candidate import SkillKind
+
+
+class ResumeBase(BaseModel):
+    object_key: str
+    filename: str
+    mime_type: str
+    size_bytes: int
+
+
+class ResumeCreate(ResumeBase):
+    pass
+
+
+class Resume(ResumeBase):
+    id: UUID
+    candidate_id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class CandidateSkillBase(BaseModel):
@@ -28,7 +49,7 @@ class CandidateBase(BaseModel):
     headline_role: str
     experience_years: Decimal = Field(..., ge=0, le=65)
     location: Optional[str] = None
-    work_modes: Optional[str] = "remote"
+    work_modes: List[str] = ["remote"]
     contacts: dict
     skills: List[CandidateSkillCreate] = []
 
@@ -41,6 +62,7 @@ class Candidate(CandidateBase):
     id: UUID
     telegram_id: int
     skills: List[CandidateSkill] = []
+    resumes: List[Resume] = []
 
     class Config:
         from_attributes = True
@@ -51,7 +73,7 @@ class CandidateUpdate(BaseModel):
     headline_role: Optional[str] = None
     experience_years: Optional[Decimal] = Field(None, ge=0, le=65)
     location: Optional[str] = None
-    work_modes: Optional[str] = None
+    work_modes: Optional[List[str]] = None
     contacts: Optional[dict] = None
     skills: Optional[List[CandidateSkillCreate]] = None
 
