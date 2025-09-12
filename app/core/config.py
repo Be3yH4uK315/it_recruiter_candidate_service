@@ -4,3 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+RABBITMQ_HOST=os.getenv("RABBITMQ_HOST")
+RABBITMQ_PORT=os.getenv("RABBITMQ_PORT")
+RABBITMQ_USER=os.getenv("RABBITMQ_USER")
+RABBITMQ_PASS=os.getenv("RABBITMQ_PASS")
+CANDIDATE_EXCHANGE_NAME=os.getenv("CANDIDATE_EXCHANGE_NAME")
+
+FILE_SERVICE_URL = os.getenv("FILE_SERVICE_URL")
