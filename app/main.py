@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from .api.v1.api import api_router
-from .services.publisher import publisher
+from app.api.v1.api import api_router
+from app.services.publisher import publisher
 
 app = FastAPI(title="Candidate Service")
 

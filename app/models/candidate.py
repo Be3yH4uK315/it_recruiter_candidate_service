@@ -8,7 +8,6 @@ from sqlalchemy import (
     func,
     ForeignKey,
     SmallInteger,
-    Integer,
     Text,
     Date
 )
@@ -16,24 +15,23 @@ from sqlalchemy.dialects.postgresql import UUID, BIGINT, JSONB, NUMERIC
 from app.core.db import Base
 import enum
 
-
-class SkillKind(str, enum.Enum):
-    HARD = "hard"
-    TOOL = "tool"
-    LANGUAGE = "language"
-
-
+# --- CONTACTS ---
 class ContactsVisibility(str, enum.Enum):
     ON_REQUEST = "on_request"
     PUBLIC = "public"
     HIDDEN = "hidden"
 
-
+# --- STATUS ---
 class Status(str, enum.Enum):
     ACTIVE = "active"
     HIDDEN = "hidden"
     BLOCKED = "blocked"
 
+# --- SKILLS ---
+class SkillKind(str, enum.Enum):
+    HARD = "hard"
+    TOOL = "tool"
+    LANGUAGE = "language"
 
 class CandidateSkill(Base):
     __tablename__ = "candidate_skills"
@@ -46,21 +44,16 @@ class CandidateSkill(Base):
     
     candidate = relationship("Candidate", back_populates="skills")
 
-
+# --- RESUME ---
 class Resume(Base):
     __tablename__ = "resumes"
-
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
-    object_key = Column(String(512), nullable=False, unique=True)
-    filename = Column(String(255), nullable=False)
-    mime_type = Column(String(100), nullable=False)
-    size_bytes = Column(Integer, nullable=False)
+    file_id = Column(UUID(as_uuid=True), nullable=False, unique=True)
     created_at = Column(DateTime, server_default=func.now())
-
     candidate = relationship("Candidate", back_populates="resumes")
 
-
+# --- PROJECT ---
 class Project(Base):
     __tablename__ = "projects"
 
@@ -72,7 +65,7 @@ class Project(Base):
 
     candidate = relationship("Candidate", back_populates="projects")
 
-
+# --- EXPERIENCE ---
 class Experience(Base):
     __tablename__ = "experiences"
 
@@ -86,7 +79,7 @@ class Experience(Base):
 
     candidate = relationship("Candidate", back_populates="experiences")
 
-
+# --- CANDIDATE ---
 class Candidate(Base):
     __tablename__ = "candidates"
 
