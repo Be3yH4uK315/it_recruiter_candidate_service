@@ -109,8 +109,8 @@ def replace_resume(db: Session, candidate: models.Candidate, resume_in: schemas.
 
     return new_resume_record, old_file_id
 
-def delete_resume(db:Session, resume_in: UUID) -> models.Resume | None:
-    db_resume = db.query(models.Resume).filter(models.Resume.id == resume_in).first()
+def delete_resume(db: Session, candidate_id: UUID) -> models.Resume | None:
+    db_resume = db.query(models.Resume).filter(models.Resume.candidate_id == candidate_id).first()
     if db_resume:
         db.delete(db_resume)
         db.commit()
@@ -130,3 +130,26 @@ def delete_project(db: Session, project_id: UUID) -> models.Project | None:
         db.delete(db_project)
         db.commit()
     return db_project
+
+# --- AVATAR ---
+def replace_avatar(db: Session, candidate: models.Candidate, avatar_in: schemas.AvatarCreate) -> (models.Avatar, UUID | None):
+    old_file_id = None
+    if candidate.avatars:
+        old_avatar_record = candidate.avatars[0]
+        old_file_id = old_avatar_record.file_id
+        db.delete(old_avatar_record)
+        db.flush()
+
+    new_avatar_record = models.Avatar(candidate_id=candidate.id, file_id=avatar_in.file_id)
+    db.add(new_avatar_record)
+    db.commit()
+    db.refresh(new_avatar_record)
+
+    return new_avatar_record, old_file_id
+
+def delete_avatar(db:Session, candidate_id: UUID) -> models.Avatar | None:
+    db_avatar = db.query(models.Avatar).filter(models.Avatar.candidate_id == candidate_id).first()
+    if db_avatar:
+        db.delete(db_avatar)
+        db.commit()
+    return db_avatar

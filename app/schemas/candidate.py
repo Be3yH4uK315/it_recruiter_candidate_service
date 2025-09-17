@@ -5,6 +5,19 @@ from decimal import Decimal
 from datetime import datetime
 from app.models.candidate import SkillKind
 
+# --- AVATAR ---
+class AvatarBase(BaseModel):
+    file_id: UUID
+
+class AvatarCreate(AvatarBase):
+    pass
+
+class Avatar(AvatarBase):
+    id: UUID
+    candidate_id: UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 # --- PROJECT ---
 class ProjectBase(BaseModel):
     title: str = Field(..., max_length=255)
@@ -77,6 +90,7 @@ class Candidate(CandidateBase):
     skills: List[CandidateSkill] = Field(default_factory=list)
     resumes: List[Resume] = Field(default_factory=list)
     projects: List[Project] = Field(default_factory=list)
+    avatars: List[Avatar] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 

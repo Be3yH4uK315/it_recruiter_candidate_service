@@ -133,3 +133,76 @@ def replace_candidate_resume(
     new_resume, old_file_id = crud.replace_resume(db=db, candidate=db_candidate, resume_in=resume_in)
 
     return new_resume
+
+@router.delete("/by-telegram/{telegram_id}/resume", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_candidate_resume(
+    telegram_id: int,
+    db: Session = Depends(get_db),
+    pub: RabbitMQProducer = Depends(get_publisher)
+):
+    db_candidate = crud.get_candidate_by_telegram_id(db, telegram_id=telegram_id)
+    if not db_candidate:
+        raise HTTPException(status_code=404, detail="Кандидат не найден")
+    db_resume = crud.delete_resume(db, candidate_id=db_candidate.id)
+    if not db_resume:
+        raise HTTPException(status_code=404, detail="Резюме не найдено")
+    pydantic_candidate = schemas.Candidate.model_validate(db_candidate)
+    await pub.publish_message(
+        routing_key="candidate.updated",
+        message_body=pydantic_candidate.model_dump_json().encode()
+    )
+    return None
+
+# --- AVATAR ---
+@router.put("/by-telegram/{telegram_id}/avatar", response_model=schemas.Avatar)
+async def replace_candidate_avatar(
+    telegram_id: int,
+    avatar_in: schemas.AvatarCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    pub: RabbitMQProducer = Depends(get_publisher)
+):
+    db_candidate = crud.get_candidate_by_telegram_id(db, telegram_id=telegram_id)
+    if not db_candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    new_avatar, old_file_id = crud.replace_avatar(db=db, candidate=db_candidate, avatar_in=avatar_in)
+
+    if old_file_id:
+        message_body = json.dumps({
+            "file_id": str(old_file_id),
+            "owner_telegram_id": telegram_id
+        }).encode()
+        background_tasks.add_task(
+            pub.publish_message,
+            routing_key="file.avatar.deleted",
+            message_body=message_body
+        )
+
+    updated_candidate = crud.get_candidate(db, candidate_id=db_candidate.id)
+    pydantic_candidate = schemas.Candidate.model_validate(updated_candidate)
+    await pub.publish_message(
+        routing_key="candidate.updated",
+        message_body=pydantic_candidate.model_dump_json().encode()
+    )
+
+    return new_avatar
+
+@router.delete("/by-telegram/{telegram_id}/avatar", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_candidate_avatar(
+    telegram_id: int,
+    db: Session = Depends(get_db),
+    pub: RabbitMQProducer = Depends(get_publisher)
+):
+    db_candidate = crud.get_candidate_by_telegram_id(db, telegram_id=telegram_id)
+    if not db_candidate:
+        raise HTTPException(status_code=404, detail="Кандидат не найден")
+    db_avatar = crud.delete_avatar(db, candidate_id=db_candidate.id)
+    if not db_avatar:
+        raise HTTPException(status_code=404, detail="Аватарка не найдена")
+    pydantic_candidate = schemas.Candidate.model_validate(db_candidate)
+    await pub.publish_message(
+        routing_key="candidate.updated",
+        message_body=pydantic_candidate.model_dump_json().encode()
+    )
+    return None

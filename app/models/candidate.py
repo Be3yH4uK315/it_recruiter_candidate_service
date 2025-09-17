@@ -15,6 +15,15 @@ from sqlalchemy.dialects.postgresql import UUID, BIGINT, JSONB, NUMERIC
 from app.core.db import Base
 import enum
 
+# --- AVATAR ---
+class Avatar(Base):
+    __tablename__ = "avatars"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
+    file_id = Column(UUID(as_uuid=True), nullable=False, unique=True)
+    created_at = Column(DateTime, server_default=func.now())
+    candidate = relationship("Candidate", back_populates="avatars")
+
 # --- CONTACTS ---
 class ContactsVisibility(str, enum.Enum):
     ON_REQUEST = "on_request"
@@ -100,3 +109,4 @@ class Candidate(Base):
     resumes = relationship("Resume", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
     projects = relationship("Project", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
     experiences = relationship("Experience", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
+    avatars = relationship("Avatar", back_populates="candidate", cascade="all, delete-orphan", lazy="joined")
