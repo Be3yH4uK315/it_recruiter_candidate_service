@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 from app.models.candidate import SkillKind
 
 # --- AVATAR ---
@@ -16,6 +16,23 @@ class Avatar(AvatarBase):
     id: UUID
     candidate_id: UUID
     created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# --- EXPERIENCE ---
+class ExperienceBase(BaseModel):
+    company: str = Field(..., max_length=255)
+    position: str = Field(..., max_length=255)
+    start_date: date
+    end_date: Optional[date] = None
+    responsibilities: Optional[str] = None
+
+class ExperienceCreate(ExperienceBase):
+    pass
+
+class Experience(ExperienceBase):
+    id: UUID
+    candidate_id: UUID
+
     model_config = ConfigDict(from_attributes=True)
 
 # --- PROJECT ---
@@ -87,6 +104,7 @@ class CandidateCreate(CandidateBase):
 class Candidate(CandidateBase):
     id: UUID
     telegram_id: int
+    experiences: List[Experience] = Field(default_factory=list)
     skills: List[CandidateSkill] = Field(default_factory=list)
     resumes: List[Resume] = Field(default_factory=list)
     projects: List[Project] = Field(default_factory=list)
@@ -98,6 +116,7 @@ class CandidateUpdate(BaseModel):
     display_name: Optional[str] = None
     headline_role: Optional[str] = None
     experience_years: Optional[Decimal] = Field(None, ge=0, le=65)
+    experiences: List[ExperienceCreate] = None
     location: Optional[str] = None
     work_modes: Optional[List[str]] = None
     contacts: Optional[Dict[str, Any]] = None

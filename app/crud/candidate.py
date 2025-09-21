@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy.orm import Session
 from uuid import UUID
 from app import models, schemas
@@ -48,7 +50,7 @@ def update_candidate(
     update_data = candidate_in.model_dump(exclude_unset=True)
 
     for field, value in update_data.items():
-        if field not in ["skills", "projects"]:
+        if field not in ["skills", "projects", "experiences"]:
             setattr(db_candidate, field, value)
 
     if "skills" in update_data and update_data["skills"] is not None:
@@ -72,6 +74,22 @@ def update_candidate(
                 **project_in.model_dump(), candidate_id=db_candidate.id
             )
             db.add(db_project)
+
+    if "experiences" in update_data and update_data["experiences"] is not None:
+        db.query(models.Experience).filter(
+            models.Experience.candidate_id == db_candidate.id
+        ).delete(synchronize_session=False)
+
+        new_experiences_models = []
+        for exp_in in candidate_in.experiences:
+            db_exp = models.Experience(
+                **exp_in.model_dump(), candidate_id=db_candidate.id
+            )
+            db.add(db_exp)
+            new_experiences_models.append(db_exp)
+
+        total_exp_years = _calculate_total_experience(new_experiences_models)
+        setattr(db_candidate, 'experience_years', total_exp_years)
 
     db.add(db_candidate)
     db.commit()
@@ -153,3 +171,16 @@ def delete_avatar(db:Session, candidate_id: UUID) -> models.Avatar | None:
         db.delete(db_avatar)
         db.commit()
     return db_avatar
+
+# --- EXPERIENCE ---
+def _calculate_total_experience(experiences: list[models.Experience]) -> float:
+    if not experiences:
+        return 0.0
+
+    total_days = 0
+    for exp in experiences:
+        end_date = exp.end_date if exp.end_date else date.today()
+        if end_date > exp.start_date:
+            total_days += (end_date - exp.start_date).days
+
+    return round(total_days / 365.25, 1)
